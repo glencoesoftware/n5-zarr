@@ -1,0 +1,30 @@
+image: ubuntu1804
+stack: jdk 11
+
+environment:
+  ARTIFACTORY_USERNAME:
+    secure: ZVwlgtk8NtZWeEqpYjR9d8NXeX+xMnuCzgITBKRhtD8=
+  ARTIFACTORY_PASSWORD:
+    secure: O6ThMzLvtSOPLV0U5yFOkl8G1tFrFOGZEpKI4NSD12c=
+  DEPLOYMENT_REPOSITORY_ID: gs-nexus
+  DEPLOYMENT_REPOSITORY: gs-nexus::default::https://repo.glencoesoftware.com/repository/n5-zarr-snapshots/
+
+install:
+  - sh: sudo apt-get update
+  - sh: sudo apt-get install -y libblosc1
+
+build: off
+
+build_script:
+  - mvn -Dhttps.protocols="TLSv1.2" compile
+
+test_script:
+  - mvn test
+  - envsubst < settings.xml > ${HOME}/.m2/settings.xml
+  - mvn -DaltDeploymentRepository=${DEPLOYMENT_REPOSITORY} deploy
+
+artifacts:
+  - path: target/*.jar
+
+cache:
+  - ${HOME}/.m2 -> pom.xml
